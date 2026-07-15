@@ -798,6 +798,45 @@ app.post("/api/auth/2fa/toggle", authenticateToken, (req: any, res: any) => {
   res.json({ twoFactorEnabled: user.twoFactorEnabled });
 });
 
+// 27. File Meta API (Tags, Comments)
+app.get("/api/files/meta/:filename", authenticateToken, (req: any, res: any) => {
+  const filename = req.params.filename;
+  const key = `${req.user.username}_${filename}`;
+  const meta = fileMeta[key] || { tags: [], comments: [] };
+  res.json(meta);
+});
+
+app.post("/api/files/meta/:filename/tags", authenticateToken, (req: any, res: any) => {
+  const filename = req.params.filename;
+  const { tag } = req.body;
+  const key = `${req.user.username}_${filename}`;
+  if (!fileMeta[key]) fileMeta[key] = { tags: [], comments: [] };
+  
+  if (tag && !fileMeta[key].tags.includes(tag)) {
+    fileMeta[key].tags.push(tag);
+    saveFileMeta();
+  }
+  res.json(fileMeta[key]);
+});
+
+app.post("/api/files/meta/:filename/comments", authenticateToken, (req: any, res: any) => {
+  const filename = req.params.filename;
+  const { comment } = req.body;
+  const key = `${req.user.username}_${filename}`;
+  if (!fileMeta[key]) fileMeta[key] = { tags: [], comments: [] };
+  
+  if (comment) {
+    fileMeta[key].comments.push({
+      id: Date.now().toString(),
+      text: comment,
+      author: req.user.username,
+      timestamp: new Date().toISOString()
+    });
+    saveFileMeta();
+  }
+  res.json(fileMeta[key]);
+});
+
 app.listen(port, () => {
   console.log(`Nexus backend listening at http://localhost:${port}`);
 });
