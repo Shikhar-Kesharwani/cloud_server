@@ -8,13 +8,13 @@ import bcrypt from "bcryptjs";
 
 const app = express();
 const port = process.env.PORT || 3000;
-const storageBase = path.join(__dirname, "storage");
-const usersDbPath = path.join(__dirname, "db", "users.json");
-const sharesDbPath = path.join(__dirname, "db", "shares.json");
-const calendarDbPath = path.join(__dirname, "db", "calendar.json");
-const mailDbPath = path.join(__dirname, "db", "mail.json");
-const talkDbPath = path.join(__dirname, "db", "talk.json");
-const deckDbPath = path.join(__dirname, "db", "deck.json");
+const storageBase = path.join(import.meta.dirname, "storage");
+const usersDbPath = path.join(import.meta.dirname, "db", "users.json");
+const sharesDbPath = path.join(import.meta.dirname, "db", "shares.json");
+const calendarDbPath = path.join(import.meta.dirname, "db", "calendar.json");
+const mailDbPath = path.join(import.meta.dirname, "db", "mail.json");
+const talkDbPath = path.join(import.meta.dirname, "db", "talk.json");
+const deckDbPath = path.join(import.meta.dirname, "db", "deck.json");
 
 const JWT_SECRET = "nexus_secret_key_12345";
 
@@ -91,7 +91,7 @@ function saveDeck() {
   fs.writeFileSync(deckDbPath, JSON.stringify(deckState, null, 2));
 }
 
-const fileMetaDbPath = path.join(__dirname, "db", "file_meta.json");
+const fileMetaDbPath = path.join(import.meta.dirname, "db", "file_meta.json");
 let fileMeta: any = {};
 try {
   fileMeta = JSON.parse(fs.readFileSync(fileMetaDbPath, "utf-8"));
@@ -103,12 +103,12 @@ function saveFileMeta() {
 }
 
 const loadDb = (filename: string) => {
-  const dbPath = path.join(__dirname, "db", filename);
+  const dbPath = path.join(import.meta.dirname, "db", filename);
   try { return JSON.parse(fs.readFileSync(dbPath, "utf-8")); } 
   catch (err) { return {}; }
 };
 const saveDb = (filename: string, data: any) => {
-  fs.writeFileSync(path.join(__dirname, "db", filename), JSON.stringify(data, null, 2));
+  fs.writeFileSync(path.join(import.meta.dirname, "db", filename), JSON.stringify(data, null, 2));
 };
 
 let contactsDb = loadDb("contacts.json");
@@ -216,7 +216,7 @@ const authenticateToken = (req: any, res: any, next: any) => {
 };
 
 // Setup multer for file uploads
-const upload = multer({ dest: path.join(__dirname, "tmp") }); // temporary upload dir
+const upload = multer({ dest: path.join(import.meta.dirname, "tmp") }); // temporary upload dir
 
 // Utility to format file size
 function formatSize(bytes: number): string {
