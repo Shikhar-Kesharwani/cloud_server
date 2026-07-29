@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import multer from "multer";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import { isSupabaseConfigured, supabase, uploadToSupabaseStorage, downloadFromSupabaseStorage } from "./db/supabase.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
