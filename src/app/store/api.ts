@@ -50,6 +50,27 @@ export function useFiles() {
   return { files, refreshFiles };
 }
 
+export interface PhotoItem {
+  id: string;
+  name: string;
+  url: string;
+}
+
+export function usePhotos() {
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  
+  const refreshPhotos = () => {
+    fetch("/api/photos", { headers: getAuthHeaders() }).then(r => r.json()).then(setPhotos).catch(console.error);
+  };
+
+  useEffect(() => {
+    refreshPhotos();
+  }, []);
+  
+  return { photos, refreshPhotos };
+}
+
+
 export async function uploadFile(file: File) {
   const formData = new FormData();
   formData.append("file", file);
