@@ -24,7 +24,6 @@ const deckDbPath = path.join(dbDir, "deck.json");
 if (!fs.existsSync(storageBase)) fs.mkdirSync(storageBase, { recursive: true });
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
-const JWT_SECRET = "nexus_secret_key_12345";
 
 app.use(cors());
 app.use(express.json());
@@ -99,7 +98,17 @@ function saveDeck() {
   fs.writeFileSync(deckDbPath, JSON.stringify(deckState, null, 2));
 }
 
-const fileMetaDbPath = path.join(import.meta.dirname, "db", "file_meta.json");
+import rateLimit from "express-rate-limit";
+
+const JWT_SECRET = process.env.JWT_SECRET || "nexus_production_secret_key_998877";
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: { error: "Too many authentication attempts. Please try again after 15 minutes." }
+});
+
+const fileMetaDbPath = path.join(dbDir, "file_meta.json");
 let fileMeta: any = {};
 try {
   fileMeta = JSON.parse(fs.readFileSync(fileMetaDbPath, "utf-8"));
@@ -111,12 +120,12 @@ function saveFileMeta() {
 }
 
 const loadDb = (filename: string) => {
-  const dbPath = path.join(import.meta.dirname, "db", filename);
+  const dbPath = path.join(dbDir, filename);
   try { return JSON.parse(fs.readFileSync(dbPath, "utf-8")); } 
   catch (err) { return {}; }
 };
 const saveDb = (filename: string, data: any) => {
-  fs.writeFileSync(path.join(import.meta.dirname, "db", filename), JSON.stringify(data, null, 2));
+  fs.writeFileSync(path.join(dbDir, filename), JSON.stringify(data, null, 2));
 };
 
 let contactsDb = loadDb("contacts.json");
@@ -124,7 +133,7 @@ let notesDb = loadDb("notes.json");
 let tasksDb = loadDb("tasks.json");
 
 // 0. Auth API
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", authLimiter, async (req, res) => {
   const { username, password } = req.body;
   const user = users.find((u: any) => u.username === username);
   if (!user) return res.status(401).json({ error: "Invalid credentials" });
@@ -154,7 +163,7 @@ app.post("/api/auth/login", async (req, res) => {
   });
 });
 
-app.post("/api/auth/register", async (req, res) => {
+app.post("/api/auth/register", authLimiter, async (req, res) => {
   const { username, password, displayName } = req.body;
   
   if (!username || !password) {
