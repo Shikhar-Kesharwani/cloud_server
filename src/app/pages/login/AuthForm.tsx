@@ -37,7 +37,8 @@ export function AuthForm({ onFocusChange, onSuccess }: AuthFormProps) {
     setIsLoading(true);
 
     try {
-      const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+      const endpoint = mode === 'login' ? `${API_BASE}/api/auth/login` : `${API_BASE}/api/auth/register`;
       const body = mode === 'login' 
         ? { username, password } 
         : { username, password, displayName };

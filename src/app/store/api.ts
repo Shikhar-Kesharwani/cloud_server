@@ -31,6 +31,8 @@ export interface ActivityEvent {
 
 import { useState, useEffect } from "react";
 
+export const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 export const getAuthHeaders = () => {
   const token = localStorage.getItem("nexus_token");
   return token ? { "Authorization": `Bearer ${token}` } : {};
@@ -40,7 +42,7 @@ export function useFiles() {
   const [files, setFiles] = useState<FileItem[]>([]);
   
   const refreshFiles = () => {
-    fetch("/api/files", { headers: getAuthHeaders() }).then(r => r.json()).then(setFiles).catch(console.error);
+    fetch(`${API_BASE}/api/files`, { headers: getAuthHeaders() }).then(r => r.json()).then(setFiles).catch(console.error);
   };
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export function usePhotos() {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   
   const refreshPhotos = () => {
-    fetch("/api/photos", { headers: getAuthHeaders() }).then(r => r.json()).then(setPhotos).catch(console.error);
+    fetch(`${API_BASE}/api/photos`, { headers: getAuthHeaders() }).then(r => r.json()).then(setPhotos).catch(console.error);
   };
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export function usePhotos() {
 export async function uploadFile(file: File) {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch("/api/files/upload", {
+  const res = await fetch(`${API_BASE}/api/files/upload`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: formData,
@@ -84,7 +86,7 @@ export async function uploadFile(file: File) {
 }
 
 export async function deleteFile(filename: string) {
-  const res = await fetch(`/api/files/${encodeURIComponent(filename)}`, {
+  const res = await fetch(`${API_BASE}/api/files/${encodeURIComponent(filename)}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
@@ -93,7 +95,7 @@ export async function deleteFile(filename: string) {
 }
 
 export async function createShare(filename: string) {
-  const res = await fetch("/api/shares", {
+  const res = await fetch(`${API_BASE}/api/shares`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ filename })
@@ -103,13 +105,13 @@ export async function createShare(filename: string) {
 }
 
 export async function getFileMeta(filename: string) {
-  const res = await fetch(`/api/files/meta/${encodeURIComponent(filename)}`, { headers: getAuthHeaders() });
+  const res = await fetch(`${API_BASE}/api/files/meta/${encodeURIComponent(filename)}`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error("Failed to load meta");
   return res.json();
 }
 
 export async function addTag(filename: string, tag: string) {
-  const res = await fetch(`/api/files/meta/${encodeURIComponent(filename)}/tags`, {
+  const res = await fetch(`${API_BASE}/api/files/meta/${encodeURIComponent(filename)}/tags`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ tag })
@@ -119,7 +121,7 @@ export async function addTag(filename: string, tag: string) {
 }
 
 export async function addComment(filename: string, comment: string) {
-  const res = await fetch(`/api/files/meta/${encodeURIComponent(filename)}/comments`, {
+  const res = await fetch(`${API_BASE}/api/files/meta/${encodeURIComponent(filename)}/comments`, {
     method: "POST",
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ comment })
@@ -129,13 +131,13 @@ export async function addComment(filename: string, comment: string) {
 }
 
 export async function getVersions(filename: string) {
-  const res = await fetch(`/api/files/versions/${encodeURIComponent(filename)}`, { headers: getAuthHeaders() });
+  const res = await fetch(`${API_BASE}/api/files/versions/${encodeURIComponent(filename)}`, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error("Failed to load versions");
   return res.json();
 }
 
 export async function restoreVersion(filename: string, versionId: string) {
-  const res = await fetch(`/api/files/versions/restore/${encodeURIComponent(filename)}/${encodeURIComponent(versionId)}`, {
+  const res = await fetch(`${API_BASE}/api/files/versions/restore/${encodeURIComponent(filename)}/${encodeURIComponent(versionId)}`, {
     method: "POST",
     headers: getAuthHeaders()
   });
@@ -146,7 +148,7 @@ export async function restoreVersion(filename: string, versionId: string) {
 export function useActivity() {
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   useEffect(() => {
-    fetch("/api/activity", { headers: getAuthHeaders() }).then(r => r.json()).then(setActivity).catch(console.error);
+    fetch(`${API_BASE}/api/activity`, { headers: getAuthHeaders() }).then(r => r.json()).then(setActivity).catch(console.error);
   }, []);
   return activity;
 }
