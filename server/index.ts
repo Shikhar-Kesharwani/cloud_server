@@ -2,19 +2,27 @@ import express from "express";
 import cors from "cors";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import multer from "multer";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const port = process.env.PORT || 3000;
-const storageBase = path.join(import.meta.dirname, "storage");
-const usersDbPath = path.join(import.meta.dirname, "db", "users.json");
-const sharesDbPath = path.join(import.meta.dirname, "db", "shares.json");
-const calendarDbPath = path.join(import.meta.dirname, "db", "calendar.json");
-const mailDbPath = path.join(import.meta.dirname, "db", "mail.json");
-const talkDbPath = path.join(import.meta.dirname, "db", "talk.json");
-const deckDbPath = path.join(import.meta.dirname, "db", "deck.json");
+const storageBase = path.join(__dirname, "storage");
+const dbDir = path.join(__dirname, "db");
+const usersDbPath = path.join(dbDir, "users.json");
+const sharesDbPath = path.join(dbDir, "shares.json");
+const calendarDbPath = path.join(dbDir, "calendar.json");
+const mailDbPath = path.join(dbDir, "mail.json");
+const talkDbPath = path.join(dbDir, "talk.json");
+const deckDbPath = path.join(dbDir, "deck.json");
+
+if (!fs.existsSync(storageBase)) fs.mkdirSync(storageBase, { recursive: true });
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
 const JWT_SECRET = "nexus_secret_key_12345";
 
@@ -837,6 +845,7 @@ app.post("/api/files/meta/:filename/comments", authenticateToken, (req: any, res
   res.json(fileMeta[key]);
 });
 
-app.listen(port, () => {
-  console.log(`Nexus backend listening at http://localhost:${port}`);
+const host = "0.0.0.0";
+app.listen(Number(port), host, () => {
+  console.log(`Nexus backend listening on http://${host}:${port}`);
 });
