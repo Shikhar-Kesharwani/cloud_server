@@ -36,6 +36,16 @@ app.use(cors({
 app.use(express.json());
 app.disable("x-powered-by");
 
+// Root API Status Endpoint
+app.get("/", (req: any, res: any) => {
+  res.json({
+    status: "online",
+    service: "Nexus Cloud Backend API",
+    version: "1.0.0",
+    docs: "/api/system/stats"
+  });
+});
+
 // Load users
 let users: any[] = [];
 try {
