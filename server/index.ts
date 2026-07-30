@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import multer from "multer";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import helmet from "helmet";
 import { isSupabaseConfigured, supabase, uploadToSupabaseStorage, downloadFromSupabaseStorage } from "./db/supabase.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,6 +27,7 @@ if (!fs.existsSync(storageBase)) fs.mkdirSync(storageBase, { recursive: true });
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
 
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(",") : "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -229,8 +231,9 @@ const authenticateToken = (req: any, res: any, next: any) => {
     if (err) return res.sendStatus(403);
     req.user = decoded;
     
-    // Set user storage dir
-    req.userStorageDir = path.join(storageBase, req.user.username);
+    // Set user storage dir with Path Traversal Protection
+    const safeUsername = path.basename(req.user.username).replace(/[^a-zA-Z0-9_-]/g, "");
+    req.userStorageDir = path.join(storageBase, safeUsername);
     if (!fs.existsSync(req.userStorageDir)) {
       fs.mkdirSync(req.userStorageDir, { recursive: true });
     }
@@ -238,8 +241,11 @@ const authenticateToken = (req: any, res: any, next: any) => {
   });
 };
 
-// Setup multer for file uploads
-const upload = multer({ dest: path.join(import.meta.dirname, "tmp") }); // temporary upload dir
+// Setup multer for file uploads with payload size limits to prevent DoS
+const upload = multer({
+  dest: path.join(__dirname, "tmp"),
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB max file upload limit
+});
 
 // Utility to format file size
 function formatSize(bytes: number): string {
@@ -351,7 +357,7 @@ app.post("/api/files/upload", authenticateToken, upload.single("file"), (req: an
     return res.status(400).json({ error: "No file uploaded" });
   }
   
-  const originalName = req.file.originalname;
+  const originalName = path.basename(req.file.originalname);
   const tempPath = req.file.path;
   const targetPath = path.join(req.userStorageDir, originalName);
   const versionsDir = path.join(req.userStorageDir, ".versions");
@@ -376,7 +382,7 @@ app.post("/api/files/upload", authenticateToken, upload.single("file"), (req: an
 
 // 5. Download API
 app.get("/api/files/download/:filename", authenticateToken, (req: any, res: any) => {
-  const filename = req.params.filename;
+  const filename = path.basename(req.params.filename);
   const filePath = path.join(req.userStorageDir, filename);
 
   if (fs.existsSync(filePath)) {
@@ -388,7 +394,7 @@ app.get("/api/files/download/:filename", authenticateToken, (req: any, res: any)
 
 // 6. Delete API (Move to Trash)
 app.delete("/api/files/:filename", authenticateToken, (req: any, res: any) => {
-  const filename = req.params.filename;
+  const filename = path.basename(req.params.filename);
   const filePath = path.join(req.userStorageDir, filename);
   const trashDir = path.join(req.userStorageDir, ".trash");
 
